@@ -1,6 +1,9 @@
+import random
 import clingo
 
-class Carcass:
+from .. import StateHistory
+
+class Carcass(StateHistory):
 
     def __init__(self, mdp, rules=[]):
 
@@ -11,7 +14,10 @@ class Carcass:
         self._ground_actions=dict()
         self.state=None
 
+        # Set the first abstract state
         self._update_abstract_state()
+
+        super().__init__(self.state)
 
     def _update_abstract_state(self):
 
@@ -63,7 +69,25 @@ class Carcass:
                 self._ground_actions= dict()
 
 
-
     def ground_actions_of(self, abstract_action):
 
         return self._ground_actions.get(abstract_action, dict())
+
+    def transition(self, abstract_action):
+    
+        ground_action = random.choice(list(self.ground_actions_of(abstract_action)))
+
+        next_ground_state, next_reward = self.mdp.transition(ground_action)
+
+        self._update_abstract_state()
+
+        super().transition(abstract_action, #A[t]
+                           self.state, # S[t+1]
+                           next_reward # R[t+1]
+                          )
+
+        return self.state, next_reward
+
+    @property 
+    def discount_rate(self):
+        return self.mdp.discount_rate
