@@ -5,10 +5,11 @@ from .. import StateHistory
 
 class Carcass(StateHistory):
 
-    def __init__(self, mdp, rules=[]):
+    def __init__(self, mdp, rules=[], background_knowledge=""):
 
         self.mdp = mdp
         self.rules = rules
+        self.background_knowledge = background_knowledge
 
         self.available_actions=set()
         self._ground_actions=dict()
@@ -26,8 +27,10 @@ class Carcass(StateHistory):
         for rule_id, rule in enumerate(self.rules):
 
             ctl = clingo.Control()
+            ctl.add('base', [], self.background_knowledge)
             ctl.add('base', [], rule)
             ctl.add('base', [], ' '.join(f'{s}.' for s in self.mdp.state))
+            ctl.add('base', [], ' '.join(f'{s}.' for s in self.mdp.state_static))
             ctl.ground(parts=[('base', [])])
 
             solvehandle = ctl.solve(yield_=True)

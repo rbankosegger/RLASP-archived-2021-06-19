@@ -243,3 +243,28 @@ class TestAbstraction(unittest.TestCase):
         opt2 = (mdp.state == next_ground_state_option_2)
         self.assertTrue((opt1 and (not opt2)) or ((not opt1) and opt2))
 
+
+    def test_background_knowledge(self):
+
+        background_knowledge = """
+            nrTowers(N) :- N = #count { block(B): on(B,table) }.
+        """
+
+        rules = [
+
+            """
+            :- nrTowers(N), N != 2.
+            """,
+        ]
+
+        # A state with a tower count of 1 should end up in the gutter
+        mdp = BlocksWorld(state_initial={'on(b1,b2)', 'on(b2,table)'}, 
+                          state_static={'subgoal(b2,b1)'})
+        abstract_mdp = Carcass(mdp, rules, background_knowledge)
+        self.assertEqual('gutter', abstract_mdp.state)
+
+        # A state with a tower count of 2 should end up in abstract state 0
+        mdp = BlocksWorld(state_initial={'on(b1,table)', 'on(b2,table)'}, 
+                          state_static={'subgoal(b2,b1)'})
+        abstract_mdp = Carcass(mdp, rules, background_knowledge)
+        self.assertEqual('abstract0', abstract_mdp.state)

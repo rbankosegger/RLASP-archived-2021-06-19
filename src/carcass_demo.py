@@ -1,5 +1,5 @@
 from mdp import BlocksWorld, BlocksWorldBuilder
-from abstraction import Carcass
+from mdp.abstraction import Carcass
 
 bwb = BlocksWorldBuilder(blocks_world_size=3)
 
