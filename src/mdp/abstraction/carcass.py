@@ -1,3 +1,4 @@
+import os
 import random
 import clingo
 
@@ -5,11 +6,14 @@ from .. import StateHistory
 
 class Carcass(StateHistory):
 
-    def __init__(self, mdp, rules=[], background_knowledge=""):
+    @staticmethod
+    def file_path(file_name):
+        return os.path.join(os.path.dirname(os.path.abspath(__file__)), 'carcass_rules', file_name)
+
+    def __init__(self, mdp, rules_filename):
 
         self.mdp = mdp
-        self.rules = rules
-        self.background_knowledge = background_knowledge
+        self.rules_filename = rules_filename 
 
         self.available_actions=set()
         self._ground_actions=dict()
@@ -22,50 +26,45 @@ class Carcass(StateHistory):
 
     def _update_abstract_state(self):
 
-        rule_applicable = False
+        ctl = clingo.Control()
+        ctl.load(self.file_path(self.rules_filename))
+        ctl.add('base', [], ' '.join(f'{s}.' for s in self.mdp.state))
+        ctl.add('base', [], ' '.join(f'{s}.' for s in self.mdp.state_static))
+        ctl.ground(parts=[('base', [])])
 
-        for rule_id, rule in enumerate(self.rules):
+        solvehandle = ctl.solve(yield_=True)
 
-            ctl = clingo.Control()
-            ctl.add('base', [], self.background_knowledge)
-            ctl.add('base', [], rule)
-            ctl.add('base', [], ' '.join(f'{s}.' for s in self.mdp.state))
-            ctl.add('base', [], ' '.join(f'{s}.' for s in self.mdp.state_static))
-            ctl.ground(parts=[('base', [])])
+        model = solvehandle.model()
 
-            solvehandle = ctl.solve(yield_=True)
-
-            model = solvehandle.model()
-            rule_applicable = solvehandle.get().satisfiable
-
-            if rule_applicable:
     
-                self.state=f'abstract{rule_id}'
-                self.available_actions = set()
-                self._ground_actions=dict()
+        #self.state=f'abstract{rule_id}'
+        self.available_actions = set()
+        self._ground_actions=dict()
         
-                for symbol in model.symbols(shown=True):
-        
-                    if symbol.name == 'abstractAction':
-                        
-                        abstract_action =  str(symbol.arguments[0])
-                        ground_action = str(symbol.arguments[1])
-        
-                        self.available_actions.add(abstract_action)
-        
-                        self._ground_actions[abstract_action] = self._ground_actions.get(abstract_action, set()) | {ground_action}
+        for symbol in model.symbols(shown=True):
 
-                break
+            if symbol.name == 'choose':
 
-        if not rule_applicable:
+                self.state=f'carcass_{symbol.arguments[0]}'
+            
+        
+            if symbol.name == 'abstractAction':
+                
+                abstract_action =  str(symbol.arguments[0])
+                ground_action = str(symbol.arguments[1])
+        
+                self.available_actions.add(abstract_action)
+        
+                self._ground_actions[abstract_action] = self._ground_actions.get(abstract_action, set()) | {ground_action}
+
+
+        if self.state == 'carcass_gutter':
             
             # No rules are applicable. Group all available ground actions into one single "gutter" action.
 
-            self.state = 'gutter'
-
             if len(self.mdp.available_actions) > 0:
-                self.available_actions = {'gutter'}
-                self._ground_actions = { 'gutter' : self.mdp.available_actions }
+                self.available_actions = {'random'}
+                self._ground_actions = { 'random' : self.mdp.available_actions }
 
             else:
                 self.available_actions = set()
@@ -75,6 +74,7 @@ class Carcass(StateHistory):
     def ground_actions_of(self, abstract_action):
 
         return self._ground_actions.get(abstract_action, dict())
+
 
     def transition(self, abstract_action):
     
