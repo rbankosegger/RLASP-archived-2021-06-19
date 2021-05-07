@@ -25,7 +25,7 @@ class TestAbstraction(unittest.TestCase):
 
         abstract_mdp = Carcass(mdp, rules_filename='blocksworld_otterlo_example.lp')
 
-        self.assertEqual('carcass_r1', abstract_mdp.state)
+        self.assertEqual('carcass_r1[move(x1,table),move(x1,x3),move(x3,x1)]', abstract_mdp.state)
         self.assertEqual({'move(x1,x3)', 'move(x3,x1)', 'move(x1,table)'}, abstract_mdp.available_actions)
 
         self.assertEqual({'move(b1,b3)'}, abstract_mdp.ground_actions_of('move(x1,x3)'))
@@ -40,7 +40,7 @@ class TestAbstraction(unittest.TestCase):
 
         abstract_mdp = Carcass(mdp, rules_filename='blocksworld_otterlo_example.lp')
 
-        self.assertEqual('carcass_r2', abstract_mdp.state)
+        self.assertEqual('carcass_r2[move(x1,x2),move(x1,x3),move(x2,x1),move(x2,x3),move(x3,x1),move(x3,x2)]', abstract_mdp.state)
         self.assertEqual({'move(x1,x2)', 'move(x2,x1)', 'move(x1,x3)', 'move(x3,x1)', 'move(x2,x3)', 'move(x3,x2)'}, abstract_mdp.available_actions)
 
         # Observe: All moves have the same ground action set!!
@@ -59,7 +59,7 @@ class TestAbstraction(unittest.TestCase):
 
         abstract_mdp = Carcass(mdp, rules_filename='blocksworld_otterlo_example.lp')
 
-        self.assertEqual('carcass_r3', abstract_mdp.state)
+        self.assertEqual('carcass_r3[move(x1,table)]', abstract_mdp.state)
         self.assertEqual({'move(x1,table)'}, abstract_mdp.available_actions)
 
         self.assertEqual({'move(b1,table)'}, abstract_mdp.ground_actions_of('move(x1,table)'))
@@ -78,7 +78,7 @@ class TestAbstraction(unittest.TestCase):
 
         abstract_mdp = Carcass(mdp, 'blocksworld_otterlo_example_alt.lp')
 
-        self.assertEqual('carcass_r2', abstract_mdp.state)
+        self.assertEqual('carcass_r2[move(x1,x2)]', abstract_mdp.state)
         self.assertEqual({'move(x1,x2)'}, abstract_mdp.available_actions)
 
         # Observe: All moves have the same ground action set!!
@@ -94,7 +94,7 @@ class TestAbstraction(unittest.TestCase):
 
         abstract_mdp = Carcass(mdp, 'blocksworld_otterlo_example_alt.lp')
 
-        self.assertEqual('carcass_gutter', abstract_mdp.state)
+        self.assertEqual('carcass_gutter[random]', abstract_mdp.state)
         self.assertEqual({'random'}, abstract_mdp.available_actions)
 
         self.assertEqual({'move(b2,table)'}, abstract_mdp.ground_actions_of('random'))
@@ -108,28 +108,28 @@ class TestAbstraction(unittest.TestCase):
 
         abstract_mdp = Carcass(mdp, 'blocksworld_otterlo_example_alt.lp')
 
-        self.assertEqual('carcass_r1', abstract_mdp.state)
+        self.assertEqual('carcass_r1[move(x1,table),move(x1,x3),move(x3,x1)]', abstract_mdp.state)
 
         next_state, next_reward = abstract_mdp.transition('move(x1,x3)')
-        self.assertEqual('carcass_r1', next_state)
+        self.assertEqual('carcass_r1[move(x1,table),move(x1,x3),move(x3,x1)]', next_state)
         self.assertEqual(-1, next_reward)
-        self.assertEqual('carcass_r1', abstract_mdp.state)
+        self.assertEqual('carcass_r1[move(x1,table),move(x1,x3),move(x3,x1)]', abstract_mdp.state)
         self.assertEqual({'on(b1,table)', 'on(b2,b3)', 'on(b3,table)'}, mdp.state)
 
         next_state, next_reward = abstract_mdp.transition('move(x3,x1)')
-        self.assertEqual('carcass_gutter', next_state)
+        self.assertEqual('carcass_gutter[]', next_state)
         self.assertEqual(100-1, next_reward)
-        self.assertEqual('carcass_gutter', abstract_mdp.state)
+        self.assertEqual('carcass_gutter[]', abstract_mdp.state)
         self.assertEqual({'on(b3,table)', 'on(b2,b3)', 'on(b1,b2)'}, mdp.state)
 
         # Check if trajectory is correct: S0, A0, R1, S1, A1, R2, S2
-        self.assertEqual('carcass_r1', abstract_mdp.state_history[0]) # S0
+        self.assertEqual('carcass_r1[move(x1,table),move(x1,x3),move(x3,x1)]', abstract_mdp.state_history[0]) # S0
         self.assertEqual('move(x1,x3)', abstract_mdp.action_history[0]) # A0
         self.assertEqual(-1, abstract_mdp.reward_history[1]) # R1
-        self.assertEqual('carcass_r1', abstract_mdp.state_history[1]) #S1
+        self.assertEqual('carcass_r1[move(x1,table),move(x1,x3),move(x3,x1)]', abstract_mdp.state_history[1]) #S1
         self.assertEqual('move(x3,x1)', abstract_mdp.action_history[1]) # A1
         self.assertEqual(100-1, abstract_mdp.reward_history[2]) # R2
-        self.assertEqual('carcass_gutter', abstract_mdp.state_history[2]) #S2
+        self.assertEqual('carcass_gutter[]', abstract_mdp.state_history[2]) #S2
 
         # Test returns
         self.assertEqual(-1 + 99, abstract_mdp.return_history[0])
@@ -142,7 +142,7 @@ class TestAbstraction(unittest.TestCase):
 
         abstract_mdp = Carcass(mdp, 'blocksworld_otterlo_example_alt.lp')
 
-        self.assertEqual('carcass_r1', abstract_mdp.state)
+        self.assertEqual('carcass_r1[move(x1,table),move(x1,x3),move(x3,x1)]', abstract_mdp.state)
         self.assertEqual({'move(x1,x3)', 'move(x3,x1)', 'move(x1,table)'}, abstract_mdp.available_actions)
 
         self.assertEqual({'move(b1,b3)', 'move(b1,b4)'}, abstract_mdp.ground_actions_of('move(x1,x3)'))

@@ -40,12 +40,17 @@ class Carcass(StateHistory):
         #self.state=f'abstract{rule_id}'
         self.available_actions = set()
         self._ground_actions=dict()
+
+        self._asp_model_symbols = list(model.symbols(shown=True))
+
+        state_name = ''
         
-        for symbol in model.symbols(shown=True):
+        for symbol in self._asp_model_symbols:
+
 
             if symbol.name == 'choose':
 
-                self.state=f'carcass_{symbol.arguments[0]}'
+                state_name=f'carcass_{symbol.arguments[0]}'
             
         
             if symbol.name == 'abstractAction':
@@ -58,7 +63,7 @@ class Carcass(StateHistory):
                 self._ground_actions[abstract_action] = self._ground_actions.get(abstract_action, set()) | {ground_action}
 
 
-        if self.state == 'carcass_gutter':
+        if state_name == 'carcass_gutter':
             
             # No rules are applicable. Group all available ground actions into one single "gutter" action.
 
@@ -69,6 +74,9 @@ class Carcass(StateHistory):
             else:
                 self.available_actions = set()
                 self._ground_actions= dict()
+
+
+        self.state = f'{state_name}[{",".join(a for a in sorted(self.available_actions))}]'
 
 
     def ground_actions_of(self, abstract_action):
