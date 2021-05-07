@@ -1,30 +1,14 @@
+import os
+import sys
+
+# Make sure the path of the framework is included in the import path
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../src/')))
+
+from mdp import BlocksWorld, BlocksWorldBuilder
 from mdp import BlocksWorld, BlocksWorldBuilder
 from mdp.abstraction import Carcass
 
-bwb = BlocksWorldBuilder(blocks_world_size=5)
-
-background_knowledge = """
-    nrTowers(N) :- N = #count { block(B): on(B,table) }.
-"""
-
-rules = [
-    """
-    :- nrTowers(N), N != 5.
-    """,
-
-    """
-    :- nrTowers(N), N != 4.
-    """,
-
-    """
-    :- nrTowers(N), N != 3.
-    """,
-    
-    """
-    :- nrTowers(N), N != 2.
-    """,
-]
-
+bwb = BlocksWorldBuilder(blocks_world_size=3)
 
 abstract_states_collected = dict()
 
@@ -32,7 +16,7 @@ abstract_states_collected = dict()
 for state in bwb.all_states:
 
     mdp = BlocksWorld(state_initial=state, state_static={'subgoal(b1,b2)', 'subgoal(b2,b3)'})
-    abstract_mdp = Carcass(mdp, rules, background_knowledge)
+    abstract_mdp = Carcass(mdp, 'blocksworld_otterlo_example.lp')
     abstract_states_collected[abstract_mdp.state] = abstract_states_collected.get(abstract_mdp.state, set()) | {(mdp, abstract_mdp)}
 
 
@@ -41,9 +25,9 @@ print('+++')
 print()
 for abstract_state_label, ground_states in sorted(abstract_states_collected.items()):
 
-    print('Abstract state:', abstract_state_label, f'({len(ground_states)} states)')
-
-    for (mdp, abstract_mdp) in list(ground_states)[:3]:
+    print('Abstract state:', abstract_state_label)
+    
+    for (mdp, abstract_mdp) in ground_states:
         print('\t', sorted(mdp.state))
 
         for abstract_action in abstract_mdp.available_actions:
