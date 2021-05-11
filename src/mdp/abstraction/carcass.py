@@ -73,7 +73,11 @@ class Carcass(StateHistory):
 
             else:
                 self.available_actions = set()
-                self._ground_actions= dict()
+                self._ground_actions = dict()
+
+        if len(self.mdp.available_actions) == 0:
+            self.available_actions = set()
+            self._ground_actions = dict()
 
 
         self.state = f'{state_name}[{",".join(a for a in sorted(self.available_actions))}]'

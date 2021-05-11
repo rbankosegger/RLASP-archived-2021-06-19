@@ -16,12 +16,17 @@ class BlocksWorld(MarkovDecisionProcedure):
 
 class BlocksWorldBuilder():
 
-    def __init__(self, blocks_world_size: int, state_enumeration_limit: int = 9):
+    def __init__(self, blocks_world_size: int, state_enumeration_limit: int = 9, state_static: Set = None):
 
         self.blocks_world_size: int = blocks_world_size
         self.state_enumeration_limit: int = state_enumeration_limit
 
         self.block_terms: List[str] = [f'b{n}' for n in range(blocks_world_size)]
+
+        if state_static:
+            self.state_static: Set = state_static
+        else:
+            self.state_static: Set = set(f'subgoal({x},{y})' for (x,y) in zip(self.block_terms, ['table']+self.block_terms))
 
         self.file_name: str  = 'blocksworld_initial_states.lp'
         self.file_path: str = os.path.join(os.path.dirname(os.path.abspath(__file__)), self.file_name)
@@ -38,13 +43,10 @@ class BlocksWorldBuilder():
 
     def build_mdp(self):
 
-        # Use goal state in which all blocks are stacked in order
-        state_static = set(f'subgoal({x},{y})' for (x,y) in zip(self.block_terms, ['table']+self.block_terms))
-
         while True:
 
             state_start = self._generate_random_state()
-            mdp = BlocksWorld(state_start, state_static)
+            mdp = BlocksWorld(state_start, self.state_static)
 
             # Continue generating random start states until we find one that is not equal to 
             # the goal state.
