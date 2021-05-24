@@ -120,7 +120,7 @@ class TestAbstraction(unittest.TestCase):
         self.assertEqual('carcass_gutter[]', next_state)
         self.assertEqual(100-1, next_reward)
         self.assertEqual('carcass_gutter[]', abstract_mdp.state)
-        self.assertEqual({'on(b3,table)', 'on(b2,b3)', 'on(b1,b2)'}, mdp.state)
+        self.assertEqual({'on(b3,table)', 'on(b2,b3)', 'on(b1,b2)', 'goal'}, mdp.state)
 
         # Check if trajectory is correct: S0, A0, R1, S1, A1, R2, S2
         self.assertEqual('carcass_r1[move(x1,table),move(x1,x3),move(x3,x1)]', abstract_mdp.state_history[0]) # S0

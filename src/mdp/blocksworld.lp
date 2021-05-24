@@ -10,6 +10,7 @@
 
 % 	STATE FUNCTIONS S(...):
 %	on(B,L)		... describes block `B` being stacked on top of location `L`.
+%	goal		... labels states in which all subgoals are reached.
 
 %	ACTION FUNCTIONS A(...):
 %	move(B,L)	... describes the action of moving block `B` to location `L`.
@@ -46,13 +47,12 @@ executable(move(B,L), T) :- block(B), free(B, T), free(L, T),
 tic(on(B,L), T+1) :- tic(on(B,L), T), not act(move(B,_), T), time(T).
 tic(on(B,L), T+1) :- act(move(B,L),T), time(T).
 
-
 % Describe the rewards for each state
 %	INPUT: 		tic(S(...), T)
 %	OUTPUT: 	partialReward(R, T)
 
-goalState(T) :- time(T), { not tic(on(B,L), T) : subgoal(B,L) } = 0.    
-partialReward(100,T) :- goalState(T), not goalState(T-1).
+tic(goal,T) :- time(T), { not tic(on(B,L), T) : subgoal(B,L) } = 0.    
+partialReward(100,T) :- tic(goal,T), not tic(goal,T-1).
 partialReward(-1,T)  :- act(_,T-1).
 
 
@@ -60,4 +60,4 @@ partialReward(-1,T)  :- act(_,T-1).
 %	INPUT: 		tic(S(...), T)
 %	OUTPUT: 	terminal(T)
 
-terminal(T) :- goalState(T).
+terminal(T) :- tic(goal,T).
