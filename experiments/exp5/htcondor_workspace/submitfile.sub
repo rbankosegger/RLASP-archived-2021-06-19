@@ -1,0 +1,7 @@
+executable = $(shfile)
+
+log=$(shfile).log
+error=$(shfile).err
+output=$(shfile).out
+
+queue shfile matching files *.sh

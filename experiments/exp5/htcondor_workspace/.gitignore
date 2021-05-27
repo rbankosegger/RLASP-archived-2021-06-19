@@ -1,0 +1,7 @@
+*.sh
+*.out
+*.err
+*.log
+*.csv
+env/*
+src/*
