@@ -21,7 +21,7 @@ class QTablePolicy:
 
         return self._q_table[state][action]
 
-    def suggest_action_for_state(self, state) -> Any:
+    def suggest_action_for_state(self, state, *args) -> Any:
 
         available_estimates = self._q_table[state].items()
 

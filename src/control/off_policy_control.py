@@ -14,9 +14,9 @@ class OffPolicyControl:
         # This policy does not learn -> No update to policy
         return
 
-    def suggest_action_for_state(self, state):
+    def suggest_action_for_state(self, state, ground_state):
         # Off-Policy control uses the behavior policy for next steps.
-        return self.behavior_policy.suggest_action_for_state(state)
+        return self.behavior_policy.suggest_action_for_state(state, ground_state)
 
     def update(self, state, action, delta):
         self.target_policy.update(state, action, delta)
@@ -30,7 +30,7 @@ class OffPolicyControl:
         if self.behavior_policy.is_new_state(state):
             self.behavior_policy.initialize_state(state, available_actions)
 
-    def learn_episode(self, mdp, step_limit=None):
+    def learn_episode(self, mdp, step_limit=None, per_step_callback=None):
 
         self.try_initialize_state(mdp.state, mdp.available_actions)
 
@@ -42,18 +42,26 @@ class OffPolicyControl:
                     break
 
             current_state = mdp.state
-            current_action = self.suggest_action_for_state(mdp.state)
+            current_action = self.suggest_action_for_state(mdp.state, mdp.ground_state)
+
 
             next_state, next_reward = mdp.transition(current_action)
+            current_action = mdp.action_history[-1]
 
             self.try_initialize_state(next_state, mdp.available_actions)
             self.policy_update_after_step(current_state, current_action,
                                           next_state, next_reward,
                                           mdp)
 
+            if per_step_callback:
+                per_step_callback.callback(current_state=current_state, 
+                                           current_action=current_action, 
+                                           next_state=next_state,
+                                           next_reward=next_reward)
+
         self.policy_update_after_episode(mdp)
 
-    def generate_episode_with_target_policy(self, mdp, step_limit=None):
+    def generate_episode_with_target_policy(self, mdp, step_limit=None, per_step_callback=None):
 
         self.try_initialize_state(mdp.state, mdp.available_actions)
 
@@ -64,5 +72,14 @@ class OffPolicyControl:
                 if step_limit < 0:
                     break
 
-            mdp.transition(self.target_policy.suggest_action_for_state(mdp.state))
+            current_state = mdp.state
+            current_action = self.suggest_action_for_state(mdp.state, mdp.ground_state)
+
+            next_state, next_reward = mdp.transition(current_action)
             self.try_initialize_state(mdp.state, mdp.available_actions)
+
+            if per_step_callback:
+                per_step_callback.callback(current_state=current_state, 
+                                  current_action=current_action, 
+                                  next_state=next_state,
+                                  next_reward=next_reward)

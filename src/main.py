@@ -1,5 +1,6 @@
 import copy
 from mdp import BlocksWorldBuilder, VacuumCleanerWorldBuilder, SokobanBuilder
+from mdp.abstraction import Carcass, CarcassBuilder
 from control import *
 from policy import *
 #import pandas as pd
@@ -9,6 +10,7 @@ from policy import *
 import argparse
 import sys
 import csv
+from datetime import datetime
 
 if __name__ == '__main__':
 
@@ -38,12 +40,16 @@ if __name__ == '__main__':
 
     parser.add_argument('--learning_rate', help='The learning rate (also step-size parameter or alpha) considered by some control algorithms.', type=float, default=0.3)
 
+    # Abstraction / Carcass
+    parser.add_argument('--carcass', help='The filename of the logic programm describing a carcass for the given MDP. The file must be located in `src/mdp/abstraction/carcass_rules`.', 
+                        default=None)
+
     # MDP's
     subparsers = parser.add_subparsers(help='The markov decision procedure which should be learned.', title='Markov decision procedure')
 
     parser_blocksworld = subparsers.add_parser('blocksworld', help='The classic blocksworld.')
     parser_blocksworld.add_argument('--blocks_world_size', help='The number of blocks in the blocks world.', type=int, default=5)
-    parser_blocksworld.set_defaults(mdp='blocksworld', behavior_policy='planning_exploring_starts')
+    parser_blocksworld.set_defaults(mdp='blocksworld', behavior_policy='planning_epsilon_greedy')
 
     parser_sokoban = subparsers.add_parser('sokoban', help='The sokoban game.')
     parser_sokoban.add_argument('--sokoban_level_name', help='The sokoban level name.', default='suitcase-05-01')
@@ -59,6 +65,9 @@ if __name__ == '__main__':
         mdp_builder = BlocksWorldBuilder(args.blocks_world_size)
     elif args.mdp == 'sokoban':
         mdp_builder = SokobanBuilder(args.sokoban_level_name)
+
+    if args.carcass:
+        mdp_builder = CarcassBuilder(mdp_builder, args.carcass)
 
     if args.behavior_policy == 'planning_exploring_starts':
 
@@ -108,11 +117,18 @@ if __name__ == '__main__':
 
         # First, test the target policy and see how it would perform 
         mdp_target = copy.deepcopy(mdp)
+        t0 = datetime.now()
         control.generate_episode_with_target_policy(mdp_target, step_limit=args.max_episode_length)
+        t1 = datetime.now()
+        time_spent_in_target_episode = (t1 - t0).total_seconds()
+
     
         # Second, train the target policy and the behavior policy on the mdp
         #print('Updating states backwards...')
+        t0 = datetime.now()
         control.learn_episode(mdp, step_limit=args.max_episode_length)
+        t1 = datetime.now()
+        time_spent_in_behavior_episode = (t1 - t0).total_seconds()
 
         # Finally, store all results in the dataframe
         row = {
@@ -122,6 +138,8 @@ if __name__ == '__main__':
             'episode_id': episode_id,
             'behavior_policy_return': mdp.return_history[0],
             'target_policy_return': mdp_target.return_history[0],
+            'time_spent_in_behavior_episode': time_spent_in_behavior_episode,
+            'time_spent_in_target_episode': time_spent_in_target_episode,
         }
         
         #df = df.append(pd.Series(row, name=episode_id))

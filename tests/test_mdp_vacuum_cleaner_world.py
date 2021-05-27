@@ -65,3 +65,8 @@ class TestVacuumCleanerWorld(unittest.TestCase):
         self.assertEqual({'robot(right)', 'dirty(right)'}, mdp.state_history[2]) #S2
         self.assertEqual(99, mdp.reward_history[3]) # R3
         self.assertEqual({'robot(right)'}, mdp.state_history[3]) #S3
+
+    def test_ground_state(self):
+
+        mdp = VacuumCleanerWorld()
+        self.assertEqual({'robot(left)', 'dirty(left)', 'dirty(right)'}, mdp.ground_state)

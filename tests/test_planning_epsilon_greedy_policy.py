@@ -33,7 +33,7 @@ class TestPlanningEpsilonGreedyPolicy(unittest.TestCase):
     def test_planning_in_new_states(self):
 
         planner_policy = MagicMock()
-        planner_policy.suggest_action_for_state = MagicMock(return_value='a2')
+        planner_policy.suggest_action_for_ground_state = MagicMock(return_value='a2')
 
         qtable_policy = MagicMock(spec=QTablePolicy())
         random_policy = MagicMock(spec=RandomPolicy())
@@ -42,13 +42,13 @@ class TestPlanningEpsilonGreedyPolicy(unittest.TestCase):
 
         # If a state is encountered for the first time, the planner should be called.
         policy.initialize_state(state='s1', available_actions={'a1', 'a2', 'a3'})
-        suggested_action = policy.suggest_action_for_state('s1')
+        suggested_action = policy.suggest_action_for_state(state='s1', ground_state='gs1')
         self.assertEqual('a2', suggested_action)
-        planner_policy.suggest_action_for_state.assert_called_with('s1')
+        planner_policy.suggest_action_for_ground_state.assert_called_with('gs1')
 
         # If a state is encountered more than once, the other policies are used.
         planner_policy.suggest_action_for_state.reset_mock()
-        suggested_action = policy.suggest_action_for_state('s1')
+        suggested_action = policy.suggest_action_for_state(state='s1', ground_state='gs1')
         self.assertTrue(qtable_policy.suggest_action_for_state.called \
                         or random_policy.suggest_action_for_state.called)
         planner_policy.suggest_action_for_state.assert_not_called()
@@ -70,7 +70,7 @@ class TestPlanningEpsilonGreedyPolicy(unittest.TestCase):
 
         # If a state is encountered for the first time, other policies should be used.
         policy.initialize_state(state='s1', available_actions={'plan', 'qtable', 'random'})
-        suggested_action = policy.suggest_action_for_state('s1')
+        suggested_action = policy.suggest_action_for_state(state='s1', ground_state='gs1')
         self.assertIn(suggested_action, {'plan', 'qtable', 'random'})
         self.assertTrue(qtable_policy.suggest_action_for_state.called \
                         or random_policy.suggest_action_for_state.called)
@@ -89,14 +89,14 @@ class TestPlanningEpsilonGreedyPolicy(unittest.TestCase):
         policy.initialize_state(state='s1', available_actions={'a1', 'a2', 'a3'})
 
         # The first suggestion comes from the planner
-        policy.suggest_action_for_state('s1')
+        policy.suggest_action_for_state(state='s1', ground_state='gs1')
         planner_policy.reset_mock()
 
         # The second suggestion is randomly chosen between the qtable policy and 
         # the random policy. Let's mock up the random number generator to only 
         # get suggestions from the qtable policy.
         with patch('random.random', MagicMock(return_value=0.31)): # 0.31 > 0.3 -> follow greedy policy
-            policy.suggest_action_for_state('s1')
+            policy.suggest_action_for_state(state='s1', ground_state='gs1')
 
             qtable_policy.suggest_action_for_state.assert_called_with('s1')
             planner_policy.suggest_action_for_state.assert_not_called()
@@ -109,7 +109,7 @@ class TestPlanningEpsilonGreedyPolicy(unittest.TestCase):
         planner_policy.reset_mock()
         random_policy.reset_mock()
         with patch('random.random', MagicMock(return_value=0.29)): #0.29 < 0.3 -> follow random policy
-            policy.suggest_action_for_state('s1')
+            policy.suggest_action_for_state(state='s1', ground_state='gs1')
 
             random_policy.suggest_action_for_state.assert_called_with('s1')
             planner_policy.suggest_action_for_state.assert_not_called()

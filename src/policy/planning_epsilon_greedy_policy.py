@@ -22,10 +22,14 @@ class PlanningEpsilonGreedyPolicy:
         self.random_policy.initialize_state(state, available_actions)
         self.qtable_policy.initialize_state(state, available_actions)
 
-    def suggest_action_for_state(self, state):
+    def suggest_action_for_state(self, state, ground_state):
+
+        if not ground_state:
+            ground_state = state
+
         if self.plan_for_new_states and not state in self.planned_states:
             self.planned_states.add(state)
-            return self.planner_policy.suggest_action_for_state(state)
+            return self.planner_policy.suggest_action_for_ground_state(ground_state)
             
         else:
             if random.random() >= self.epsilon:

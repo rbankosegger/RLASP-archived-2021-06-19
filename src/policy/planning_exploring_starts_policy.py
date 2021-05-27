@@ -30,7 +30,7 @@ class PlanningExploringStartsPolicy:
     def initialize_new_episode(self):
         self.first_action_in_episode = True
 
-    def suggest_action_for_state(self, state):
+    def suggest_action_for_state(self, state, ground_state):
 
         is_new_episode = self.first_action_in_episode
         is_new_state = not state in self.known_states
@@ -46,7 +46,7 @@ class PlanningExploringStartsPolicy:
         elif is_new_state:
 
             if self.plan_for_new_states:
-                return self.planner_policy.suggest_action_for_state(state)
+                return self.planner_policy.suggest_action_for_ground_state(ground_state)
 
             else:
                 return self.qtable_policy.suggest_action_for_state(state)
@@ -57,7 +57,7 @@ class PlanningExploringStartsPolicy:
                 return self.qtable_policy.suggest_action_for_state(state)
 
             else:
-                return self.planner_policy.suggest_action_for_state(state)
+                return self.planner_policy.suggest_action_for_ground_state(ground_state)
 
     def update(self, state, action, delta: float):
         self.qtable_policy.update(state, action, delta)

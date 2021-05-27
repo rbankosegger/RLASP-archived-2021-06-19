@@ -65,8 +65,8 @@ class BlocksWorldBuilder():
     def _generate_pseudo_random_state(self):
         
         generated_state = set()
-        placed = []
-        shuffled_blocks = random.sample(block_terms, len(self.block_terms))
+        placed = list()
+        shuffled_blocks = random.sample(self.block_terms, len(self.block_terms))
 
         for t, block in enumerate(shuffled_blocks):
 

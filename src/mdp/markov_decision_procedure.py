@@ -35,6 +35,10 @@ class MarkovDecisionProcedure(StateHistory):
     def problem_file_path(self):
         return self.file_path(self.problem_file_name)
 
+    @property
+    def ground_state(self):
+        return self.state
+
     def transition(self, action: str):
         
         ctl = clingo.Control()

@@ -39,7 +39,7 @@ class TestPlanningExploringStartsPolicy(unittest.TestCase):
         policy = PlanningExploringStartsPolicy(planner_policy, random_policy, qtable_policy)
         policy.initialize_state('s1', {'a1', 'a2', 'a3'})
 
-        suggested_action = policy.suggest_action_for_state('s1')
+        suggested_action = policy.suggest_action_for_state(state='s1', ground_state='gs1')
 
         # The first action in a new episode should be random (exploring start) 
         random_policy.suggest_action_for_state.assert_called_with('s1')
@@ -48,21 +48,21 @@ class TestPlanningExploringStartsPolicy(unittest.TestCase):
         # Any following action should either be planned or greedy, but not random.
         random_policy.reset_mock()
         policy.initialize_state('s2', {'a3', 'a4', 'a5'})
-        _ = policy.suggest_action_for_state('s2')
-        self.assertTrue(planner_policy.suggest_action_for_state.called \
+        _ = policy.suggest_action_for_state(state='s2', ground_state='gs2')
+        self.assertTrue(planner_policy.suggest_action_for_ground_state.called \
                         or qtable_policy.suggest_action_for_state.called)
         random_policy.suggest_action_for_state.assert_not_called()
 
         # If we start a new episode, the first action should be random again.
         policy.initialize_new_episode()
-        suggested_action = policy.suggest_action_for_state('s1')
+        suggested_action = policy.suggest_action_for_state(state='s1', ground_state='gs1')
         random_policy.suggest_action_for_state.assert_called_with('s1')
         self.assertEqual('a3', suggested_action)
         
     def test_plan_for_new_states(self):
 
         planner_policy = MagicMock(spec=PlannerPolicy)
-        planner_policy.suggest_action_for_state = MagicMock(return_value='a2')
+        planner_policy.suggest_action_for_ground_state = MagicMock(return_value='a2')
         qtable_policy = MagicMock(spec=QTablePolicy)
         qtable_policy.suggest_action_for_state = MagicMock(return_value='a3')
         random_policy = MagicMock(spec=RandomPolicy)
@@ -72,24 +72,24 @@ class TestPlanningExploringStartsPolicy(unittest.TestCase):
         
         # First action is an exploring start
         policy.initialize_state('s1', {'a1'})
-        policy.suggest_action_for_state('s1')
+        policy.suggest_action_for_state(state='s1', ground_state='gs1')
         random_policy.reset_mock()
 
         # Second action is in an unknown state. The planner should be used.
         policy.initialize_state('s2', {'a2', 'a3'})
-        suggested_action = policy.suggest_action_for_state('s2')
+        suggested_action = policy.suggest_action_for_state(state='s2', ground_state='gs2')
         self.assertEqual('a2', suggested_action)
-        planner_policy.suggest_action_for_state.assert_called_with('s2')
+        planner_policy.suggest_action_for_ground_state.assert_called_with('gs2')
         random_policy.suggest_action_for_state.assert_not_called()
         qtable_policy.suggest_action_for_state.assert_not_called()
         planner_policy.reset_mock()
 
         # The next time we encounter s2, no planning should happen.
-        suggested_action = policy.suggest_action_for_state('s2')
+        suggested_action = policy.suggest_action_for_state(state='s2', ground_state='gs2')
         self.assertEqual('a3', suggested_action)
         qtable_policy.suggest_action_for_state.assert_called_with('s2')
         random_policy.suggest_action_for_state.assert_not_called()
-        planner_policy.suggest_action_for_state.assert_not_called()
+        planner_policy.suggest_action_for_ground_state.assert_not_called()
 
     def test_dont_plan_for_new_states(self):
 
@@ -104,12 +104,12 @@ class TestPlanningExploringStartsPolicy(unittest.TestCase):
         
         # First action is an exploring start
         policy.initialize_state('s1', {'a1'})
-        policy.suggest_action_for_state('s1')
+        policy.suggest_action_for_state(state='s1', ground_state='gs1')
         random_policy.reset_mock()
 
         # Second action is in an unknown state. The planner should be used.
         policy.initialize_state('s2', {'a2', 'a3'})
-        suggested_action = policy.suggest_action_for_state('s2')
+        suggested_action = policy.suggest_action_for_state(state='s2', ground_state='gs2')
         self.assertEqual('a3', suggested_action)
         planner_policy.suggest_action_for_state.assert_not_called()
         random_policy.suggest_action_for_state.assert_not_called()
@@ -117,7 +117,7 @@ class TestPlanningExploringStartsPolicy(unittest.TestCase):
         planner_policy.reset_mock()
 
         # The next time we encounter s2, no planning should happen.
-        suggested_action = policy.suggest_action_for_state('s2')
+        suggested_action = policy.suggest_action_for_state(state='s2', ground_state='gs2')
         self.assertEqual('a3', suggested_action)
         qtable_policy.suggest_action_for_state.assert_called_with('s2')
         random_policy.suggest_action_for_state.assert_not_called()
@@ -126,7 +126,7 @@ class TestPlanningExploringStartsPolicy(unittest.TestCase):
     def test_planning_factor(self):
 
         planner_policy = MagicMock(spec=PlannerPolicy)
-        planner_policy.suggest_action_for_state = MagicMock(return_value='plan')
+        planner_policy.suggest_action_for_ground_state = MagicMock(return_value='plan')
         qtable_policy = MagicMock(spec=QTablePolicy)
         qtable_policy.suggest_action_for_state = MagicMock(return_value='greedy')
         random_policy = MagicMock(spec=RandomPolicy)
@@ -136,7 +136,7 @@ class TestPlanningExploringStartsPolicy(unittest.TestCase):
         
         # First action is an exploring start
         policy.initialize_state('s1', {'plan', 'greedy'})
-        policy.suggest_action_for_state('s1')
+        policy.suggest_action_for_state(state='s1', ground_state='gs1')
         random_policy.reset_mock()
 
 
@@ -144,11 +144,11 @@ class TestPlanningExploringStartsPolicy(unittest.TestCase):
         # the planning policy. Let's mock up the random number generator to only 
         # get suggestions from the qtable policy.
         with patch('random.random', MagicMock(return_value=0.21)): # 0.21 > 0.2 -> follow greedy policy
-            suggested_action = policy.suggest_action_for_state('s1')
+            suggested_action = policy.suggest_action_for_state(state='s1', ground_state='gs1')
             self.assertEqual('greedy', suggested_action)
 
             qtable_policy.suggest_action_for_state.assert_called_with('s1')
-            planner_policy.suggest_action_for_state.assert_not_called()
+            planner_policy.suggest_action_for_ground_state.assert_not_called()
             random_policy.suggest_action_for_state.assert_not_called()
             qtable_policy.reset_mock()
 
@@ -157,10 +157,10 @@ class TestPlanningExploringStartsPolicy(unittest.TestCase):
         # that we only get suggestions from the planner policy, things should
         # go accordingly.
         with patch('random.random', MagicMock(return_value=0.19)): # 0.19 < 0.2 -> follow planner policy
-            suggested_action = policy.suggest_action_for_state('s1')
+            suggested_action = policy.suggest_action_for_state(state='s1', ground_state='gs1')
             self.assertEqual('plan', suggested_action)
 
-            planner_policy.suggest_action_for_state.assert_called_with('s1')
+            planner_policy.suggest_action_for_ground_state.assert_called_with('gs1')
             qtable_policy.suggest_action_for_state.assert_not_called()
             random_policy.suggest_action_for_state.assert_not_called()
             planner_policy.reset_mock()

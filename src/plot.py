@@ -1,4 +1,6 @@
 from matplotlib import pyplot as plt
+from matplotlib.offsetbox import AnchoredText
+import numpy as np
 import pandas as pd
 
 import argparse
@@ -24,12 +26,33 @@ if __name__ == '__main__':
 
     control_algorithm = df.iloc[0]['arg_control_algorithm']
 
+    carcass = df.iloc[0]['arg_carcass']
 
-    plt.plot(df['behavior_policy_return'], label='Behavior policy')
+    fig, (ax0, ax1, ax2) = plt.subplots(3,1, sharex=True)
 
-    plt.plot(df['target_policy_return'], label='Target policy')
-    plt.legend()
-    plt.title(f'MDP={mdp} {mdp_params}\nControl={control_algorithm}')
+    ax0.plot(df['behavior_policy_return'], '.', alpha=0.7, label='Behavior policy')
+    ax0.plot(df['target_policy_return'], '.', alpha=0.7, label='Target policy')
+    ax0.set_xlabel('Episodes')
+    ax0.set_ylabel('Return per episode')
+
+    attxt = '\n'.join(f'{k}: {v}' for k, v in df.iloc[0].items() if 'arg_' in k)
+    at = AnchoredText(attxt, loc='center left')
+    ax0.add_artist(at)
+    ax0.legend(loc='center right')
+
+    ax1.plot(df['behavior_policy_return'].cumsum(), label='Behavior policy')
+    ax1.plot(df['target_policy_return'].cumsum(), label='Target policy')
+    ax1.set_xlabel('Episodes')
+    ax1.set_ylabel('Cumulative return per episode')
+    ax1.legend()
+
+    ax2.plot(df['time_spent_in_behavior_episode'], label='Behavior policy')
+    ax2.plot(df['time_spent_in_target_episode'], label='Target policy')
+    ax2.set_xlabel('Episodes')
+    ax2.set_ylabel('Time spent in episode (s)')
+    ax2.legend()
+
+    plt.suptitle(f'MDP={mdp} {mdp_params}\nControl={control_algorithm}\nCarcass={carcass}')
     plt.tight_layout()
     if args.output_file:
         plt.savefig(args.output_file)

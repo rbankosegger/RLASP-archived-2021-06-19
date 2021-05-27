@@ -23,7 +23,7 @@ class GuidedPolicy:
     def is_new_state(self, state):
         return False
 
-    def suggest_action_for_state(self, state):
+    def suggest_action_for_state(self, state, ground_state):
         return self.actions.popleft() 
 
     def initialize_state(*args):
@@ -44,7 +44,7 @@ class TestControl(unittest.TestCase):
         control.policy_update_after_step = MagicMock()
 
         mdp = VacuumCleanerWorldBuilder().build_mdp()
-        mdp.transition = MagicMock(return_value = ('some_next_state', -1))
+        mdp.transition = MagicMock(wraps=mdp.transition)
         control.learn_episode(mdp, step_limit=3)
 
         self.assertEqual(3, len(control.policy_update_after_step.mock_calls))
@@ -52,8 +52,8 @@ class TestControl(unittest.TestCase):
 
     def test_generate_episode_with_target_policy(self):
 
-        target_policy = GuidedPolicy(['move(right)', 'move(left)', 'vacuum', 'move(right)', 'vacuum'])
-        behavior_policy = QTablePolicy()
+        behavior_policy = GuidedPolicy(['move(right)', 'move(left)', 'vacuum', 'move(right)', 'vacuum'])
+        target_policy = QTablePolicy()
 
         control = OffPolicyControl(target_policy, behavior_policy)
 
@@ -267,3 +267,86 @@ class TestControl(unittest.TestCase):
         s2 = frozenset({'robot(right)', 'dirty(right)'})
         self.assertEqual(0.4*99, target_policy.value_for(s2, 'vacuum'))
         self.assertEqual(0, target_policy.value_for(s2, 'move(left)'))
+
+    def test_qlearning_control_callback(self):
+
+        target_policy = QTablePolicy()
+        behavior_policy = GuidedPolicy(['vacuum', 'move(right)', 'vacuum']*2)
+        control = QLearningControl(target_policy, behavior_policy, alpha=0.3)
+
+        mdp = VacuumCleanerWorldBuilder().build_mdp()
+
+        # This class's callback funciton should be called whenever an action yields a state and reward
+        class MyCallbackCls:
+
+            def __init__(self):
+                self.history = list()
+
+            def callback(self, **kwargs):
+                self.history.append(kwargs)
+
+        my_callback_obj = MyCallbackCls()
+
+        # Test when learning an episode
+
+        control.learn_episode(mdp, per_step_callback=my_callback_obj)
+
+        self.assertEqual([
+            { 'current_state': { 'robot(left)', 'dirty(left)', 'dirty(right)' },
+              'current_action': 'vacuum',
+              'next_state': { 'robot(left)', 'dirty(right)' },
+              'next_reward': -1
+            },
+            { 'current_state': { 'robot(left)', 'dirty(right)' },
+              'current_action': 'move(right)',
+              'next_state': { 'robot(right)', 'dirty(right)' },
+              'next_reward': -1
+            },
+            { 'current_state': { 'robot(right)', 'dirty(right)' },
+              'current_action': 'vacuum',
+              'next_state': { 'robot(right)'},
+              'next_reward': 99
+            },
+
+        ], my_callback_obj.history)
+
+        # Test when running an episode without learning.
+        # Note that history from the previous mdp should not be erased
+
+        mdp = VacuumCleanerWorldBuilder().build_mdp()
+        control.target_policy = GuidedPolicy(['vacuum', 'move(right)', 'vacuum']*2)
+        control.generate_episode_with_target_policy(mdp, per_step_callback=my_callback_obj)
+
+        self.assertEqual([
+            { 'current_state': { 'robot(left)', 'dirty(left)', 'dirty(right)' },
+              'current_action': 'vacuum',
+              'next_state': { 'robot(left)', 'dirty(right)' },
+              'next_reward': -1
+            },
+            { 'current_state': { 'robot(left)', 'dirty(right)' },
+              'current_action': 'move(right)',
+              'next_state': { 'robot(right)', 'dirty(right)' },
+              'next_reward': -1
+            },
+            { 'current_state': { 'robot(right)', 'dirty(right)' },
+              'current_action': 'vacuum',
+              'next_state': { 'robot(right)'},
+              'next_reward': 99
+            },
+            { 'current_state': { 'robot(left)', 'dirty(left)', 'dirty(right)' },
+              'current_action': 'vacuum',
+              'next_state': { 'robot(left)', 'dirty(right)' },
+              'next_reward': -1
+            },
+            { 'current_state': { 'robot(left)', 'dirty(right)' },
+              'current_action': 'move(right)',
+              'next_state': { 'robot(right)', 'dirty(right)' },
+              'next_reward': -1
+            },
+            { 'current_state': { 'robot(right)', 'dirty(right)' },
+              'current_action': 'vacuum',
+              'next_state': { 'robot(right)'},
+              'next_reward': 99
+            },
+
+        ], my_callback_obj.history)

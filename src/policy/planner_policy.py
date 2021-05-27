@@ -19,22 +19,22 @@ class PlannerPolicy:
         self.asp_output = None
 
 
-    def suggest_action_for_state(self, state) -> str:
-        next_action, _ = self.suggest_action_and_return_for_state(state)
+    def suggest_action_for_ground_state(self, ground_state) -> str:
+        next_action, _ = self.suggest_action_and_return_for_ground_state(ground_state)
         return next_action
 
-    def compute_optimal_return_for_state(self, state):
-        _, optimal_return = self.suggest_action_and_return_for_state(state)
+    def compute_optimal_return_for_ground_state(self, ground_state):
+        _, optimal_return = self.suggest_action_and_return_for_ground_state(ground_state)
         return optimal_return
 
-    def suggest_action_and_return_for_state(self, state) -> Tuple[str, int]:
+    def suggest_action_and_return_for_ground_state(self, ground_state) -> Tuple[str, int]:
 
         ctl = clingo.Control()
 
         ctl.load(self.mdp_interface_file_path)
         ctl.load(self.mdp_problem_file_path)
         ctl.load(self.planner_file_path)
-        ctl.add('base', [], ' '.join(f'currentState({s}).' for s in state))
+        ctl.add('base', [], ' '.join(f'currentState({s}).' for s in ground_state))
         ctl.add('base', [], ' '.join(f'{s}.' for s in self.mdp_state_static))
         ctl.add('base', [], f'#const t={self.planning_horizon}.')
         ctl.add('base', [], '#show maxReturn/1. #show bestCurrentAction/1.')

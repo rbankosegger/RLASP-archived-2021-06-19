@@ -6,7 +6,7 @@ import unittest
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../src/')))
 
 # Framework imports
-from mdp import BlocksWorld
+from mdp import BlocksWorld, BlocksWorldBuilder
 
 class TestBlocksWorld(unittest.TestCase):
 
@@ -102,3 +102,10 @@ class TestBlocksWorld(unittest.TestCase):
         self.assertEqual(mdp.return_history[1], -1 + 99)
         self.assertEqual(mdp.return_history[2], 99)
         self.assertEqual(mdp.return_history[3], 0) # Return is zero in terminal state
+
+    def test_ground_state(self):
+
+        mdp = BlocksWorld(state_initial={'on(b1,table)', 'on(b2,table)'},
+                          state_static = {'subgoal(b2,b1)'})
+
+        self.assertEqual({'on(b1,table)', 'on(b2,table)'}, mdp.ground_state)

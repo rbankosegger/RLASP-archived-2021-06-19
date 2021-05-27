@@ -19,9 +19,9 @@ class TestPlanner(unittest.TestCase):
 
         planner = PlannerPolicy(planning_horizon=1, mdp_builder=mdp_builder)
 
-        suggested_action, expected_return = planner.suggest_action_and_return_for_state(mdp.state)
+        suggested_action, expected_return = planner.suggest_action_and_return_for_ground_state(mdp.state)
 
-        self.assertEqual(suggested_action, planner.suggest_action_for_state(mdp.state))
+        self.assertEqual(suggested_action, planner.suggest_action_for_ground_state(mdp.state))
 
         mdp.transition(suggested_action)
 
@@ -37,10 +37,10 @@ class TestPlanner(unittest.TestCase):
         planner = PlannerPolicy(planning_horizon=2, mdp_builder=mdp_builder)
 
 
-        suggested_action_0, expected_return_0 = planner.suggest_action_and_return_for_state(mdp.state)
+        suggested_action_0, expected_return_0 = planner.suggest_action_and_return_for_ground_state(mdp.state)
         mdp.transition(suggested_action_0)
 
-        suggested_action_1, expected_return_1 = planner.suggest_action_and_return_for_state(mdp.state)
+        suggested_action_1, expected_return_1 = planner.suggest_action_and_return_for_ground_state(mdp.state)
         mdp.transition(suggested_action_1)
 
         self.assertEqual('move(b0,table)', suggested_action_0)
@@ -59,7 +59,7 @@ class TestPlanner(unittest.TestCase):
 
         planner = PlannerPolicy(planning_horizon=2*5+1, mdp_builder=mdp_builder)
 
-        self.assertEqual(94, planner.compute_optimal_return_for_state(mdp.state))
+        self.assertEqual(94, planner.compute_optimal_return_for_ground_state(mdp.state))
 
 
     def test_vacuum_cleaner_world(self):
@@ -69,16 +69,16 @@ class TestPlanner(unittest.TestCase):
 
         planner = PlannerPolicy(planning_horizon=4, mdp_builder=builder)
 
-        suggested_action_0, expected_return_0 = planner.suggest_action_and_return_for_state(mdp.state)
-        self.assertEqual(suggested_action_0, planner.suggest_action_for_state(mdp.state))
+        suggested_action_0, expected_return_0 = planner.suggest_action_and_return_for_ground_state(mdp.state)
+        self.assertEqual(suggested_action_0, planner.suggest_action_for_ground_state(mdp.state))
         mdp.transition(suggested_action_0)
 
-        suggested_action_1, expected_return_1 = planner.suggest_action_and_return_for_state(mdp.state)
-        self.assertEqual(suggested_action_1, planner.suggest_action_for_state(mdp.state))
+        suggested_action_1, expected_return_1 = planner.suggest_action_and_return_for_ground_state(mdp.state)
+        self.assertEqual(suggested_action_1, planner.suggest_action_for_ground_state(mdp.state))
         mdp.transition(suggested_action_1)
 
-        suggested_action_2, expected_return_2 = planner.suggest_action_and_return_for_state(mdp.state)
-        self.assertEqual(suggested_action_2, planner.suggest_action_for_state(mdp.state))
+        suggested_action_2, expected_return_2 = planner.suggest_action_and_return_for_ground_state(mdp.state)
+        self.assertEqual(suggested_action_2, planner.suggest_action_for_ground_state(mdp.state))
         mdp.transition(suggested_action_2)
 
         self.assertEqual('vacuum', suggested_action_0)
@@ -96,7 +96,7 @@ class TestPlanner(unittest.TestCase):
         mdp = VacuumCleanerWorld()
         planner = PlannerPolicy(planning_horizon=4, mdp_builder=builder)
 
-        self.assertEqual(-1 + -1 + 99, planner.compute_optimal_return_for_state(mdp.state))
+        self.assertEqual(-1 + -1 + 99, planner.compute_optimal_return_for_ground_state(mdp.state))
 
     def test_sokoban_1(self):
 
@@ -107,14 +107,14 @@ class TestPlanner(unittest.TestCase):
 
         s0 = mdp.state
 
-        a0, g0 = planner.suggest_action_and_return_for_state(mdp.state)
+        a0, g0 = planner.suggest_action_and_return_for_ground_state(mdp.state)
         self.assertEqual(g0, 94)
 
         mdp.transition('push(6,3,left)')
         s1 = s0 - { 'sokoban(4,3)', 'box(6,3)' } | { 'sokoban(6,3)', 'box(5,3)' }
         self.assertSetEqual(s1, mdp.state)
         
-        a1, g1 = planner.suggest_action_and_return_for_state(mdp.state)
+        a1, g1 = planner.suggest_action_and_return_for_ground_state(mdp.state)
         self.assertEqual(g1, 95)
 
     def test_sokoban_2(self):
@@ -130,7 +130,7 @@ class TestPlanner(unittest.TestCase):
 
             if len(mdp.available_actions) > 0:
 
-                a, g = planner.suggest_action_and_return_for_state(mdp.state)
+                a, g = planner.suggest_action_and_return_for_ground_state(mdp.state)
 
                 self.assertTrue(a in mdp.available_actions)
 
@@ -156,7 +156,7 @@ class TestPlanner(unittest.TestCase):
 
             if len(mdp.available_actions) > 0:
 
-                a, g = planner.suggest_action_and_return_for_state(mdp.state)
+                a, g = planner.suggest_action_and_return_for_ground_state(mdp.state)
 
                 self.assertNotEqual(None, a)
                 self.assertNotEqual(set(), mdp.available_actions)
@@ -182,7 +182,7 @@ class TestPlanner(unittest.TestCase):
         self.assertSetEqual({'push(3,2,left)'}, mdp.available_actions)
 
         planner = PlannerPolicy(planning_horizon=3, mdp_builder=builder)
-        a, g = planner.suggest_action_and_return_for_state(mdp.state)
+        a, g = planner.suggest_action_and_return_for_ground_state(mdp.state)
 
         self.assertEqual('push(3,2,left)', a)
         self.assertEqual(-101, g)
@@ -200,7 +200,7 @@ class TestPlanner(unittest.TestCase):
         self.assertSetEqual({'push(6,4,right)'}, mdp.available_actions)
 
         planner = PlannerPolicy(planning_horizon=2, mdp_builder=builder)
-        a, g = planner.suggest_action_and_return_for_state(mdp.state)
+        a, g = planner.suggest_action_and_return_for_ground_state(mdp.state)
 
         self.assertEqual('push(6,4,right)', a)
         self.assertEqual(-101, g)

@@ -7,8 +7,9 @@ from unittest.mock import MagicMock, patch
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '../src/')))
 
 # Framework imports
-from mdp import BlocksWorld
-from mdp.abstraction import Carcass
+from mdp import BlocksWorld, BlocksWorldBuilder
+from mdp.abstraction import Carcass, CarcassBuilder
+from policy import PlannerPolicy
 
 class TestAbstraction(unittest.TestCase):
 
@@ -157,3 +158,28 @@ class TestAbstraction(unittest.TestCase):
         opt1 = (mdp.state == next_ground_state_option_1)
         opt2 = (mdp.state == next_ground_state_option_2)
         self.assertTrue((opt1 and (not opt2)) or ((not opt1) and opt2))
+
+    def test_ground_state(self):
+
+        mdp = BlocksWorld(state_initial={'on(b1,b2)', 'on(b2,table)', 'on(b3,table)'}, 
+                          state_static={'subgoal(b1,b2)', 'subgoal(b2,b3)'})
+
+        abstract_mdp = Carcass(mdp, rules_filename='blocksworld_otterlo_example.lp')
+
+        self.assertEqual({'on(b1,b2)', 'on(b2,table)', 'on(b3,table)'}, abstract_mdp.ground_state)
+
+    def test_planning(self):
+
+
+        mdp_builder = CarcassBuilder(BlocksWorldBuilder(blocks_world_size=2),
+                                     'blocksworld_stackordered.lp')
+        abstract_mdp = mdp_builder.build_mdp()
+
+        planner = PlannerPolicy(planning_horizon=1, mdp_builder=mdp_builder)
+
+        ground_action = planner.suggest_action_for_ground_state(abstract_mdp.ground_state)
+
+        next_state, next_reward = abstract_mdp.transition(ground_action)
+
+        self.assertNotEqual(ground_action, abstract_mdp.action_history[-1])
+        self.assertEqual(ground_action, abstract_mdp.mdp.action_history[-1])

@@ -24,6 +24,10 @@ class Carcass(StateHistory):
 
         super().__init__(self.state)
 
+    @property
+    def ground_state(self):
+        return self.mdp.ground_state
+
     def _update_abstract_state(self):
 
         ctl = clingo.Control()
@@ -87,10 +91,29 @@ class Carcass(StateHistory):
 
         return self._ground_actions.get(abstract_action, dict())
 
+    def find_abstract_actions_for_ground_action(self, ground_action):
 
-    def transition(self, abstract_action):
-    
-        ground_action = random.choice(list(self.ground_actions_of(abstract_action)))
+        abstract_actions = { aa for aa, gas in self._ground_actions.items() if ground_action in gas }
+
+        return abstract_actions
+
+    def transition(self, action):
+
+        # Incoming action is considered abstract if there is an abstract action matching its name
+        # If not, the incoming action is treated as ground
+
+        action_is_abstract = len(self.ground_actions_of(action)) > 0
+
+        if action_is_abstract:
+
+            abstract_action = action
+            ground_action = random.choice(list(self.ground_actions_of(abstract_action)))
+
+        else:
+
+            ground_action = action
+            abstract_action_candidates = self.find_abstract_actions_for_ground_action(action)
+            abstract_action = random.choice(list(abstract_action_candidates))
 
         next_ground_state, next_reward = self.mdp.transition(ground_action)
 
