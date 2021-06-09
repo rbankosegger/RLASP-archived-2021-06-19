@@ -24,7 +24,7 @@ def setup(i, learning_rate, epsilon, blocks_world_size):
 
     return ' '.join(args)
 
-with open('template.sh', 'r') as templatefile:
+with open('1_template.sh', 'r') as templatefile:
     template = templatefile.read()
 
 parameters_list = list(itertools.product(learning_rates, epsilons, blocksworld_sizes))
