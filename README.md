@@ -1,3 +1,10 @@
+# This repository is NO LONGER IN USE
+
+Due to some major restructuring of the repository layout, I had to migrate this repository.
+The current and active version of this repository can be found at.
+https://github.com/rbankosegger/RLASP-core
+
+
 # RLASP
 This program combines reinforcement learning (RL) with answer set programming (ASP) to evaluate policies for solving blocks world problems.
 The technique used for reinforcement learning is a first-visit Exploring Starts Monte Carlo policy evaluation method.
